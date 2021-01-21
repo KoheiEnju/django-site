@@ -28,7 +28,7 @@ SECRET_KEY = 'alt)_f(ny!2j_74un9iml_u1a6c=^2*bc^uo)-hequo=(b5=9y'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]
 
 
 # Application definition

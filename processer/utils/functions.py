@@ -73,3 +73,11 @@ def getImgBytes(frame, width, height, magnification=0.45):
     small_frame = cv2.resize(frame, (int(width*magnification), int(height*magnification)))
     imgbytes = cv2.imencode('.png', small_frame)[1].tobytes()
     return imgbytes
+
+
+def getFirstFrame(srcFile, gray=True):
+    cap = cv2.VideoCapture(srcFile)
+    _, firstFrame = cap.read()
+    if gray:
+        firstFrame = cv2.cvtColor(firstFrame, cv2.COLOR_BGR2GRAY) 
+    return firstFrame

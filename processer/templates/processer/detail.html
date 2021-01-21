@@ -1,82 +1,98 @@
-<!DOCTYPE html>
-<html>
-    <head>
-        <meta charset="UTF-8">
-        <title>processer index page</title> 
-    </head>
-    <body>
-        <h1>detail</h1>
-        Download: <a href="{{ obj.upload.url }}">{{ obj.upload.name }}</a>
+{% extends 'processer/base.html' %}
+{% load static %}
 
-        <form id="ajax_post">
-            <label for="frameNum">フレームインデックス</label>
-            <input type="number" id="frameNum" value="0">
-            <label for="brightness">brightness</label>
-            <input type="number" id="brightness" value="0">
-            <label for="brightness">contrast</label>
-            <input type="number" id="contrast" value="0">
-            <input type="submit">
-        </form>
-        <div id="posts">
-            <img src="" alt="">
+{% block title %}動画処理詳細ページ{% endblock %}
+
+{% block content %}
+<div class="row">
+
+    <div class="col-sm-3">
+        <div class="mt-3 mb-3">
+            <span class="h1">編集画面</span>
+            <span class="h4"><a href="{% url 'processer:index' %}">一覧ページ</a></span>
         </div>
-        <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
-        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
-        <script>
-            function getCookie(name) {
-                var cookieValue = null;
-                if (document.cookie && document.cookie !== '') {
-                    var cookies = document.cookie.split(';');
-                    for (var i = 0; i < cookies.length; i++) {
-                        var cookie = jQuery.trim(cookies[i]);
-                        // Does this cookie string begin with the name we want?
-                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                            break;
-                        }
-                    }
-                }
-                return cookieValue;
-            }
 
-            var csrftoken = getCookie('csrftoken');
+        <div class="mt-3 mb-3 p-3 w-100 center-block border-primary rounded border">
+            <div class="h4">
+                ダウンロード
+            </div>
+            <div class="h5">
+                <a href="{{ obj.upload.url }}">Original File</a>
+            </div>
+            {% if processedPath %}
+            <div class="h5">
+                <a href="{{ processedPath }}">Processed File</a>
+            </div>
+            {% endif %}
+        </div>
 
-            function csrfSafeMethod(method) {
-                // these HTTP methods do not require CSRF protection
-                return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
-            }
+        <div class="mt-3 mb-3 p-3 w-100 center-block border-primary rounded border">
+            <div class="h4 mb-2">パラメーター調整</div>
+            <form id="ajax_post" action="{% url 'processer:detail' obj.pk %}" method="POST">
+                {% csrf_token %}
+                <div class="input-group mb-3">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text">差分平均枚数</span>
+                    </div>
+                    <input type="number" class="form-control" name="diffNum" min="0" value="5">
+                </div>
+                <div class="input-group mb-3">
+                    <div class="input-group">
+                        <span class="input-group-text">Brightness:<span class="pl-2" id="brightness_show">
+                                0</span></span>
+                    </div>
+                    <input type="range" id="brightness" name="brightness" value="0" min="-255" max="255">
+                </div>
+                <div class="input-group mb-3">
+                    <div class="input-group">
+                        <span class="input-group-text">Contrast:<span class="pl-2" id="contrast_show"> 0</span></span>
+                    </div>
+                    <input type="range" id="contrast" name="contrast" value="0" min="-255" max="255">
+                </div>
+                <input type="submit" class="submit btn btn-primary" value="動画処理開始">
+            </form>
+        </div>
+    </div>
+    <div class="col-sm-9">
+        <div id="posts" class="mt-3">
+            <img src="{{ png }}" alt="プレビュー画像" width="90%">
+        </div>
+    </div>
+</div>
+    {% endblock %}
 
-            $.ajaxSetup({
-                beforeSend: function (xhr, settings) {
-                    if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
-                        xhr.setRequestHeader("X-CSRFToken", csrftoken);
-                    }
-                }
+    {% block extra_js %}
+    <script src="{% static 'processer/js/ajax_csrf.js' %}"></script>
+    <script>
+        // id=ajax_post の値が変化するとイベント発生(Ajax通信)
+        $('#ajax_post').on('change', e => {
+            // デフォルトのイベントをキャンセルし、ページ遷移しないようにする
+            e.preventDefault();
+
+            $.ajax({
+                'url': "{% url 'processer:ajax_image' obj.pk %}",
+                'type': 'POST',
+                'data': {
+                    'brightness': $('#brightness').val(),
+                    'contrast': $('#contrast').val(),
+                },
+                'dataType': 'json'
+            }).done(response => {
+                const p = $('<img>', { src: response.img, width: "90%" });
+                $('#posts').children().replaceWith(p);
+                $('#brightness').val(response.brightness);
+                $('#contrast').val(response.contrast);
             });
-            // 送信ボタンで呼ばれる
-            $('#ajax_post').on('submit', e => {
-                // デフォルトのイベントをキャンセルし、ページ遷移しないように!
-                e.preventDefault();
-
-                $.ajax({
-                    'url': "{% url 'processer:ajax_image' obj.pk %}",
-                    'type': 'POST',
-                    'data': {
-                        'frameNum': $('#frameNum').val(), 
-                        'brightness': $('#brightness').val(),
-                        'contrast': $('#contrast').val(),
-                    },
-                    'dataType': 'json'
-                }).done(response => {
-                    const p = $('<img>', { src: response.img, width: "50%"});
-                    $('#posts').children().replaceWith(p);
-                    $('#frameNum').val(response.frameNum);
-                    $('#brightness').val(response.brightness);
-                    $('#contrast').val(response.contrast);
-                });
-
-            });
-        </script>
-    </body>
-</html>
+        });
+        // Brightnessの値を表示
+        $('#brightness').on('change', function () {
+            let val = $(this).val();
+            $('#brightness_show').html(val);
+        });
+        // contrastの値を表示
+        $('#contrast').on('change', function () {
+            let val = $(this).val();
+            $('#contrast_show').html(val);
+        });
+    </script>
+    {% endblock %}
