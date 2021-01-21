@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>processer index page</title> 
+    </head>
+    <body>
+        <h1>detail</h1>
+        Download: <a href="{{ obj.upload.url }}">{{ obj.upload.name }}</a>
+
+        <form id="ajax_post">
+            <label for="frameNum">フレームインデックス</label>
+            <input type="number" id="frameNum" value="0">
+            <label for="brightness">brightness</label>
+            <input type="number" id="brightness" value="0">
+            <label for="brightness">contrast</label>
+            <input type="number" id="contrast" value="0">
+            <input type="submit">
+        </form>
+        <div id="posts">
+            <img src="" alt="">
+        </div>
+        <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+        <script>
+            function getCookie(name) {
+                var cookieValue = null;
+                if (document.cookie && document.cookie !== '') {
+                    var cookies = document.cookie.split(';');
+                    for (var i = 0; i < cookies.length; i++) {
+                        var cookie = jQuery.trim(cookies[i]);
+                        // Does this cookie string begin with the name we want?
+                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                            break;
+                        }
+                    }
+                }
+                return cookieValue;
+            }
+
+            var csrftoken = getCookie('csrftoken');
+
+            function csrfSafeMethod(method) {
+                // these HTTP methods do not require CSRF protection
+                return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+            }
+
+            $.ajaxSetup({
+                beforeSend: function (xhr, settings) {
+                    if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                        xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                    }
+                }
+            });
+            // 送信ボタンで呼ばれる
+            $('#ajax_post').on('submit', e => {
+                // デフォルトのイベントをキャンセルし、ページ遷移しないように!
+                e.preventDefault();
+
+                $.ajax({
+                    'url': "{% url 'processer:ajax_image' obj.pk %}",
+                    'type': 'POST',
+                    'data': {
+                        'frameNum': $('#frameNum').val(), 
+                        'brightness': $('#brightness').val(),
+                        'contrast': $('#contrast').val(),
+                    },
+                    'dataType': 'json'
+                }).done(response => {
+                    const p = $('<img>', { src: response.img, width: "50%"});
+                    $('#posts').children().replaceWith(p);
+                    $('#frameNum').val(response.frameNum);
+                    $('#brightness').val(response.brightness);
+                    $('#contrast').val(response.contrast);
+                });
+
+            });
+        </script>
+    </body>
+</html>

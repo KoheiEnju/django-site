@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>processer index page</title> 
+    </head>
+    <body>
+        <h1>upload</h1>
+        <form action="{% url 'processer:index' %}" enctype="multipart/form-data" method="POST">
+            {% csrf_token %}
+            {{ form }}
+            <input type="submit">
+        </form>
+        {% if objs %}
+        {% for obj in objs %}
+        <ul>
+            <li>
+                <a href="{% url 'processer:detail' obj.pk%}">{{ obj.upload.name }}</a>
+            </li>
+        </ul>
+        {% endfor %}
+        {% endif %}
+    </body>
+</html>
