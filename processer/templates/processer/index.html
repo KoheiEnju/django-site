@@ -4,6 +4,7 @@
 
 {% block content %}
 
+{% if form %}
 <div class="mt-3 mb-3">
     <div class="h1 mb-2">動画(.avi)のアップロード</div>
     <form action="{% url 'processer:index' %}" method="POST" enctype="multipart/form-data">
@@ -17,18 +18,30 @@
         <input class="submit btn btn-primary" type="submit" value="アップロード">
     </form>
 </div>
+{% endif %}
 
 
 {% if objs %}
 <div class="mt-3">
     <div class="h1">
         動画一覧
+        {% if upload_by %}
+        <span class="h2">by {{ upload_by }}</span>
+        <span class="h3"><a href="{% url 'processer:index' %}">全ての動画へ戻る</a></span>
+        {% endif %}
     </div>
     <div>
         {% for obj in objs %}
         <ul class="list-group">
             <li class="list-group-item">
-                <a href="{% url 'processer:detail' obj.pk %}">{{ obj.upload.name }}</a>
+                <div>
+                    <div>
+                        <a href="{% url 'processer:index'%}?upload_by={{ obj.upload_by}}">{{ obj.upload_by}}</a> {{obj.upload_at}}
+                    </div>
+                    <div>
+                        <a href="{% url 'processer:detail' obj.pk %}">{{ obj.basename }}</a>
+                    </div>
+                </div>
             </li>
         </ul>
         {% endfor %}

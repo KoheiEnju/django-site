@@ -34,6 +34,8 @@ ALLOWED_HOSTS = ["*"]
 # Application definition
 
 INSTALLED_APPS = [
+    'nichan.apps.NichanConfig',
+    'accounts.apps.AccountsConfig',
     'processer.apps.ProcesserConfig',
     'polls.apps.PollsConfig',
     'django.contrib.admin',

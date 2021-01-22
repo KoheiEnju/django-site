@@ -1,0 +1,23 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}
+インデックスページ
+{% endblock %}
+
+{% block content %}
+
+{% if user.id %}
+
+<p>ログインしました。</p>
+<p>こんにちは。{{ user.username }}さん</p>
+<p>userIDは {{ user.id }} です。</p>
+<a href="{% url 'accounts:logout' %}">ログアウト</a>
+
+{% else %}
+
+<a href="{% url 'accounts:login' %}">ログイン</a> 
+<a href="{% url 'accounts:create' %}">アカウント作成</a>
+
+{% endif %}
+
+{% endblock %}

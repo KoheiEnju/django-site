@@ -1,0 +1,83 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" href="{% static 'nichan/icon/favicon.ico' %}">
+    <link rel="stylesheet" href="{% static 'nichan/css/bootstrap.css'%}">
+    <link rel="stylesheet" href="{% static 'nichan/css/fontsize.css'%}">
+    <title>のむそう掲示板</title>
+</head>
+
+<body>
+    <!-- 見出し(のむそう板) -->
+    <div class="m-3">
+        <a class="navbar-brand" href="#">
+            <span class="h1 text-dark">のむそう板</span>
+        </a>
+    </div>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-xs-6 col-lg-6">
+                <!-- ここからコメント入力部 -->
+                <form action="{% url 'nichan:post' %}" method="POST">
+                    {% csrf_token %}
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">投稿内容</span>
+                        </div>
+                        <textarea name="text" class="form-control" aria-label="With textarea"></textarea>
+                    </div>
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text" id="basic-addon1">投稿者名</span>
+                        </div>
+                        <input type="search" name="name" class="form-control" value="名無しののむそう" aria-label="Username"
+                            aria-describedby="basic-addon1">
+                        <button type="submit" class="btn btn-dark">投稿</button>
+                    </div>
+                </form>
+                <!-- ここまでコメント入力部 -->
+                <!-- ここからコメント表示部 -->
+                <div>
+                    {% if text_list %}
+                    <ul class="list-group">
+                        {% for t in text_list %}
+                        <li class="list-group-item bg-dark text-white border-bottom border-secondary">
+                            <!-- ここから各要素 -->
+                            <div class="mb-2">
+                                <span class="text-muted">{{t.id}}</span>
+                                <span class="font-weight-bold text-white">{{ t.name }}</span>
+                                <span class="text-muted float-right">{{t.pub_date}}</span>
+                            </div>
+                            <div>
+                                <span class="h5">{{t.text}}</span>
+                            </div>
+                            <!-- ここまで各要素 -->
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p>No comments yet</p>
+                    {% endif %}
+                </div>
+                <!-- ここまでコメント表示部 -->
+            </div>
+            <div class="col-xs-6 col-lg-6">
+                <!-- ここからTwitter部 -->
+                <div class="m-3" id="twitter">
+                    <a class="twitter-timeline" href="https://twitter.com/jun14ou?ref_src=twsrc%5Etfw">Tweets by
+                        jun14ou</a>
+                    <div class="small">
+                        <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+                    </div>
+                </div>
+
+                <!-- ここまでTwitter部 -->
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

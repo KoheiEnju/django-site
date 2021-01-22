@@ -1,0 +1,20 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}
+ログインページ
+{% endblock %}
+
+{% block content %}
+
+{% if form.errors %}
+<p>認証情報が一致しません</p>
+{% endif %}
+
+<form action="{% url 'accounts:login' %}" method="POST">
+    {% csrf_token %}
+    {{ form }}
+    <input type="submit" value="ログイン">
+    <input type="hidden" name="next" value="{{ next }}">
+</form>
+
+{% endblock %}
