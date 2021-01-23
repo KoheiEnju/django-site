@@ -9,15 +9,29 @@
         <title>{% block title %}{% endblock %}</title>
     </head>
     <body>
+        <nav class="navbar navbar-dark bg-dark">
+            <a class="navbar-brand" href="#">動画処理</a>
+            {% if user.id %}
+            <p>
+                <span class="text-white">ようこそ、{{ user.username }}様</span> 
+                <a href="{% url 'accounts:logout' %}?next={{ request.path }}">ログアウトする</a> 
+            </p>
+            {% else %}
+            <p>
+                <a href="{% url 'accounts:login' %}?next={{ request.path }}">ログイン</a> 
+                <a href="{% url 'accounts:create' %}?next={{ request.path }}">アカウント作成</a>
+            </p>
+            {% endif %}
+        </nav>
+
+
         {% if user.id %}
-        <p>ようこそ、{{ user.username }}様 <a href="{% url 'accounts:logout' %}?next={{ request.path }}">ログアウトする</a></p>
         <div class="container-fluid">
             {% block content %}
             {% endblock %}
         </div>
         {% else %}
-        <a href="{% url 'accounts:login' %}?next={{ request.path }}">ログイン</a> 
-        <a href="{% url 'accounts:create' %}?next={{ request.path }}">アカウント作成</a>
+        ログインしてください
         {% endif %}
         <script src="{% static 'processer/js/bootstrap.bundle.js' %}"></script>
         <script src="{% static 'processer/js/jquery-3.5.1.min.js' %}"></script>
