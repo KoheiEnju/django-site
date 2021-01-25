@@ -3,6 +3,7 @@ import numpy as np
 
 class VideoProcesser:
     """ グレイスケール前提
+    例外処理などは全くやっていないので注意してください
     """
     
     def __init__(self, srcFilePath):
@@ -78,7 +79,7 @@ class VideoProcesser:
             outFilePath (str): 書き出すファイルのフルパス
         """
         fourcc = cv2.VideoWriter_fourcc('X', 'V', 'I', 'D')
-        video = cv2.VideoWriter(outFilePath, fourcc, self.fps, (self.witdh, self.height), False)
+        video = cv2.VideoWriter(outFilePath, fourcc, self.fps, (self.width, self.height), False)
         for frame in self.frames:
             video.write(frame)
         video.release()
