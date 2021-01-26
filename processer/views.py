@@ -5,68 +5,72 @@ from .utils.functions import *
 import cv2
 from pathlib import Path
 from django.conf import settings
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, JsonResponse, request
 import base64
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
+from django.views import View
 
 # Create your views here.
-def index(request):
-    """ 簡単な説明
-    動画処理のトップページのビューを想定。request.methodによって挙動を変えています。
-    POST: 動画のアップロートを処理し、再びトップページへリダイレクト
-    GET:  アップロードされた動画のリストを取得し、トップページをレンダリング
+class Index(View):
     """
-    if request.method == "POST":
-        form = FileUploadForm(request.POST, request.FILES)
-        if form.is_valid():
-            post = form.save()
-            # pkを取得し要素を追加する
-            # upload_byを追加
-            video = Video.objects.get(pk=post.pk)
-            video.upload_by = request.user.username
-            # basename(フォルダ名を除いたファイル名)を追加
-            video.basename = Path(video.upload.path).name
-            # 一フレーム目を保存してそのURLを追加する
-            pngFullPath = video.upload.path.replace(".avi", ".png")
-            firstFrame = getFirstFrame(video.upload.path, gray=True)
-            cv2.imwrite(pngFullPath, firstFrame)
-            video.firstFrameURL = post.upload.url.replace(".avi", ".png")
-            video.save()
-            return redirect(reverse('processer:index'))
-    else:
+    インデックスページのView
+    GET: UPされた動画の一覧を表示
+    POST: 動画をUP, Videoモデルにその他情報を登録し、サムネ画像を保存
+    """
+
+    def get(self, request):
         objs = Video.objects.all()
         if 'upload_by' in request.GET.keys():
             objs = objs.filter(upload_by=request.GET['upload_by'])
         form = FileUploadForm()
         context = {
-            'form': form, 
+            'form': form,
             'objs': objs[::-1],
         }
         if 'upload_by' in request.GET.keys():
-            context['upload_by'] = request.GET['upload_by']
+            context['text'] = request.GET['upload_by']
         return render(request, 'processer/index.html', context)
 
 
-def detail(request, pk):
-    """ 簡単な説明
-    動画処理の詳細のビューを想定。request.methodによって挙動を変えています。
-    POST: Brightnessなどのパラメタを取得して動画処理をし、ダウンロードリンクを含めて詳細ページをレンダリング
-    GET: 動画の詳細をレンダリング
+    def post(self, request):
+        form = FileUploadForm(request.POST, request.FILES)
+        if form.is_valid():
+            post = form.save()
+            # pkを取得し他の要素をVideoモデルに追加する
+            obj = Video.objects.get(pk=post.pk)
+            obj.upload_by = request.user.username
+            obj.basename = Path(obj.upload.path).name
+            pngFullPath = obj.upload.path.replace('.avi', '.png')
+            firstFrame = getFirstFrame(obj.upload.path, gray=True)
+            cv2.imwrite(pngFullPath, firstFrame)
+            obj.firstFrameURL = post.upload.url.replace('.avi', '.png')
+            obj.save()
+            return redirect(reverse('processer:index'))
+
+
+class Detail(View):
     """
-    if request.method == "GET":
+    詳細ページのView
+    GET: 詳細を表示
+    POST: Contrastなどのパラメータを送信し、動画を処理してリンクを吐き出す
+    """
+
+    def get(self, request, pk):
         obj = Video.objects.get(pk=pk)
         context = {
-            'obj': obj, 
-            'processed': None,
+            'obj': obj,
+            'processed': None
         }
         return render(request, 'processer/detail.html', context)
-    elif request.method == "POST":
+
+
+    def post(self, request, pk):
         # パラメタを取得
         brightness = int(request.POST["brightness"])
         contrast = int(request.POST["contrast"])
         diffNum = int(request.POST["diffNum"])
-        # 編集するObjectを取得
+        # objを取得
         obj = Video.objects.get(pk=pk)
         fullPath = str(settings.BASE_DIR) + str(Path(obj.upload.url))
         frames, width, height, _, fps, _ = load(fullPath, gray=True)

@@ -21,7 +21,6 @@
 {% endif %}
 
 
-{% if objs %}
 <div class="mt-3">
     <div class="h1">
         動画一覧
@@ -30,6 +29,7 @@
         <span class="h3"><a href="{% url 'processer:index' %}">全ての動画へ戻る</a></span>
         {% endif %}
     </div>
+    {% if objs %}
     <div>
         {% for obj in objs %}
         <ul class="list-group">
