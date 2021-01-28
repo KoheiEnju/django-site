@@ -15,7 +15,8 @@ class Video(models.Model):
     upload = models.FileField(upload_to="upload/")
     upload_at = models.DateTimeField(default=timezone.now)
     upload_by = models.CharField(max_length=150, default="")
-    firstFrameURL = models.CharField(max_length=200, default="")
+    oneFrameURL = models.CharField(max_length=200, default="")
+    headFrameURL= models.CharField(max_length=200, default="")
     basename = models.CharField(max_length=200, default="")
 
     def __str__(self):
