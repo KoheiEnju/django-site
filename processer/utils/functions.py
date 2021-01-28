@@ -4,6 +4,7 @@ import cv2
 
 
 def rmBackground(frames, num, single=False, idx=0, gray=True):
+    zero_level = 150
     if num == 0:
         if single == False:
             return frames
@@ -23,9 +24,9 @@ def rmBackground(frames, num, single=False, idx=0, gray=True):
             ave = ave.reshape(1, height, width, ch)
         else:
             ave = ave.reshape(1, height, width)
-        proc_frames = np.clip((frames - ave), 0, 255)
+        proc_frames = np.clip((frames - ave + zero_level), 0, 255)
     else:
-        proc_frames = np.clip((frame - ave), 0, 255)
+        proc_frames = np.clip((frame - ave + zero_level), 0, 255)
     return proc_frames.astype('u1')
 
 def setBrightness(frames, brightness):

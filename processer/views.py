@@ -75,9 +75,9 @@ class Detail(View):
         fullPath = str(settings.BASE_DIR) + str(Path(obj.upload.url))
         frames, width, height, _, fps, _ = load(fullPath, gray=True)
         # 動画処理
+        frames = rmBackground(frames, diffNum, gray=True)
         frames = setBrightness(frames, brightness)
         frames = setContrast(frames, contrast)
-        frames = rmBackground(frames, diffNum, gray=True)
         processedFullPath = fullPath.replace(".avi", "_processed.avi")
         writeVideo(processedFullPath, fps, width, height, frames, gray=True, kernel=1)
         context = {
