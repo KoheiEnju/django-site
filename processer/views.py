@@ -1,16 +1,15 @@
 from django.shortcuts import redirect, render
 from .forms import FileUploadForm
 from .models import Video
-from .utils.functions import *
-from .utils.videoProcesser import VideoProcesser
+from .utils.processer import VideoProcesser, ImageProcesser
 import cv2
 from pathlib import Path
 from django.conf import settings
-from django.http import HttpResponse, JsonResponse, request
+from django.http import JsonResponse
 import base64
 from django.urls import reverse
-from django.contrib.auth.decorators import login_required
 from django.views import View
+import numpy as np
 
 # Create your views here.
 class Index(View):
@@ -42,12 +41,12 @@ class Index(View):
             obj = Video.objects.get(pk=post.pk)
             obj.upload_by = request.user.username
             obj.basename = Path(obj.upload.path).name
-            # 任意のフレームを保存
+            # 任意のフレームを保存(仮に10としている)
             pngOneFullPath = obj.upload.path.replace('.avi', '.png')
             oneFrame = VideoProcesser.getOneFrame(obj.upload.path, index=10)
             cv2.imwrite(pngOneFullPath, oneFrame)
             obj.oneFrameURL = post.upload.url.replace('.avi', '.png')
-            # 最初の5フレームを引いたて128足した任意のフレームを保存
+            # 最初の5フレームを引いて128足した任意のフレームを保存
             pngHeadFullPath = obj.upload.path.replace('.avi', '_head.png')
             headFrame = VideoProcesser.getHeadFrame(obj.upload.path)
             subtractedFrame = np.clip(oneFrame.astype('f') - headFrame.astype('f') + 128, 0, 255).astype('u1')
@@ -81,23 +80,24 @@ class Detail(View):
         # objを取得
         obj = Video.objects.get(pk=pk)
         fullPath = str(settings.BASE_DIR) + str(Path(obj.upload.url))
-        frames, width, height, _, fps, _ = load(fullPath, gray=True)
-        # 動画処理
-        frames = rmBackground(frames, diffNum, gray=True)
-        frames = setBrightness(frames, brightness)
-        frames = setContrast(frames, contrast)
-        processedFullPath = fullPath.replace(".avi", "_processed.avi")
-        writeVideo(processedFullPath, fps, width, height, frames, gray=True, kernel=1)
+        processedFullPath = fullPath.replace(".avi", "_processed.mp4")
+        VideoProcesser(fullPath) \
+            .subtract(diffNum) \
+            .brightness(brightness) \
+            .contrast(contrast) \
+            .writeVideo(processedFullPath)
         context = {
             'obj': obj, 
-            'processedPath': obj.upload.url.replace(".avi", "_processed.avi")
+            'processedPath': obj.upload.url.replace(".avi", "_processed.mp4")
         }
         return render(request, 'processer/detail.html', context)
 
 
 def getFrameViaAjax(request, pk):
-    """画像(動画ではない)編集用 Ajax通信 
-    パラメタを取得しBASE64形式にエンコードした画像をJSONで返却する
+    """ Contrast, Brightness が変更されるたびに呼び出される。
+        上記の値を受け取って画像を編集し、BASE64形式でJSONに格納し返却する
+        ※特にこだわりは無いがpng形式としている。
+        拡張子を変更する場合は1. imencode(), 2. "data:image/***;base64"を変更すること。
     """
     # パラメタを取得
     brightness = int(request.POST["brightness"])
@@ -107,12 +107,12 @@ def getFrameViaAjax(request, pk):
     pngPath = obj.headFrameURL
     pngFullPath = str(settings.BASE_DIR) + str(Path(pngPath))
     # 画像を編集
-    firstFrame = cv2.imread(pngFullPath, cv2.IMREAD_GRAYSCALE)
-    firstFrame = setBrightness(firstFrame, brightness)
-    firstFrame = setContrast(firstFrame, contrast)
+    ip = ImageProcesser(pngFullPath) \
+        .brightness(brightness) \
+        .contrast(contrast)
     # JSONレスポンス用に画像をBASE64エンコードする
     # Array -> bytes -> base64 -> str 
-    imgbytes = cv2.imencode('.png', firstFrame)[1].tobytes()
+    imgbytes = cv2.imencode('.png', ip.frame)[1].tobytes()
     img_b64 = base64.b64encode(imgbytes)
     img_str = img_b64.decode("utf-8")
     d = {
