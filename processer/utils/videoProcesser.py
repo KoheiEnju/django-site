@@ -100,3 +100,46 @@ class VideoProcesser:
         _, firstFrame = cap.read()
         firstFrame = cv2.cvtColor(firstFrame, cv2.COLOR_BGR2GRAY)
         return firstFrame
+
+    
+    @staticmethod
+    def getHeadFrame(srcFilePath, frameNum=5):
+        """ ***静的メソッド
+
+        Args:
+            srcFilePath (str): 動画のファイルパス
+            frameNum ([type]): 0~frameNum-1 を平均化したフレームを返す
+
+        Returns:
+            ndArray: 最初のframeNum枚を平均化したフレーム
+        """
+        cap = cv2.VideoCapture(srcFilePath)
+        height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        headFrames = np.empty((frameNum, height, width)).astype('u1')
+        for i in range(frameNum):
+            _, frame = cap.read()
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            headFrames[i] = frame
+        averageFrame = np.mean(headFrames, axis=0)
+        return averageFrame
+
+
+    @staticmethod
+    def getOneFrame(srcFilePath, index=0):
+        """ ***静的メソッド***
+        一フレーム目を取り出すだけ。あえてクラスに属させる必要はない。
+
+        Args:
+            srcFilePath (str): 動画のファイルパス
+            index (int): 何フレーム目を取り出すか
+
+        Returns:
+            ndArray: 指定のindexのフレーム
+        """
+        frame = None
+        cap = cv2.VideoCapture(srcFilePath)
+        for i in range(index+1):
+            _, frame = cap.read()
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        return frame
